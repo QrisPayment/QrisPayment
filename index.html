@@ -1,22 +1,18 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Test Kirim</title>
-</head>
+<head><title>Test Simple Send</title></head>
 <body>
-  <button onclick="sendData()">Kirim Data</button>
-
+  <button onclick="sendTest()">Kirim Halooo</button>
   <script>
-    const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAN6Gv858_t70HfJWZ237FpbZZ8GlL_uNHN7sbBnX6p4-RSGIKRCMAxd8cCQVzUW9M1A/exec";
+    const APPSCRIPT_URL = "PASTE_URL_EXEC_LO";
 
-    async function sendData() {
-      await fetch(APPSCRIPT_URL, {
+    function sendTest() {
+      fetch(APPSCRIPT_URL, {
         method: "POST",
-        mode: "no-cors",
-        body: "HALO BRO"
-      });
-      alert("✅ Data dikirim, cek spreadsheet!");
+        headers: {"Content-Type":"text/plain;charset=utf-8"},
+        body: "Hallo-LORD"
+      }).then(_ => alert("Dikirim bro! Cek sheet."))
+        .catch(err => alert("Gagal kirim: " + err));
     }
   </script>
 </body>
