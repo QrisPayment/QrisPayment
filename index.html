@@ -1,56 +1,22 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Form Pembayaran</title>
-  <style>
-    body {font-family:sans-serif;background:#f5f5f5;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;}
-    .card {background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:320px;text-align:center;}
-    input,button {width:100%;padding:12px;margin-top:10px;border-radius:8px;border:1px solid #ccc;font-size:16px;}
-    button {background:#3b82f6;color:#fff;border:none;cursor:pointer;}
-    button:hover {background:#2563eb;}
-  </style>
+  <title>Test Kirim</title>
 </head>
 <body>
-  <div class="card">
-    <h2>Input Data Pembayaran</h2>
-    <input id="codeInput" placeholder="Kode Barang">
-    <button onclick="sendData()">Kirim</button>
-  </div>
+  <button onclick="sendData()">Kirim Data</button>
 
   <script>
     const APPSCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAN6Gv858_t70HfJWZ237FpbZZ8GlL_uNHN7sbBnX6p4-RSGIKRCMAxd8cCQVzUW9M1A/exec";
 
     async function sendData() {
-      const code = document.getElementById("codeInput").value || "NONE";
-
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-          const body = {
-            code: code,
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            timestamp: new Date().toISOString()
-          };
-
-          try {
-            await fetch(APPSCRIPT_URL, {
-              method: "POST",
-              mode: "no-cors",
-              headers: {"Content-Type": "application/json"},
-              body: JSON.stringify(body)
-            });
-            alert("✅ Data terkirim! Cek Spreadsheet lo.");
-          } catch (e) {
-            alert("❌ Gagal kirim: " + e.message);
-          }
-        }, () => {
-          alert("❌ Akses lokasi ditolak");
-        });
-      } else {
-        alert("Browser tidak support lokasi.");
-      }
+      await fetch(APPSCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: "HALO BRO"
+      });
+      alert("✅ Data dikirim, cek spreadsheet!");
     }
   </script>
 </body>
